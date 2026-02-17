@@ -53,7 +53,7 @@ It combines satellite-based damage data, spatial analysis, multi-criteria scorin
 │
 ├── output/              (generated outputs)
 ├── PROJECT_PROGRESS_PRESENTATION_AR.md
-└── pa.pdf
+
 ```
 
 ---
