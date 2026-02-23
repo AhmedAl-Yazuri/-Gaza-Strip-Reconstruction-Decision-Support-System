@@ -1086,7 +1086,6 @@ def create_interactive_map(hex_gdf, damage_gdf=None, projects_df=None, infrastru
                     <b>Type:</b> {project.get('Infrastructure_Type', 'Unknown')}<br>
                     <b>Municipality:</b> {project.get('Municipality', 'Unknown')}<br>
                     <b>Priority:</b> #{project.get('Final_Priority_Rank', 'Unknown')}<br>
-                    <b>Cost:</b> {project.get('Estimated_Cost', 'TBD')}<br>
                     <b>Timeline:</b> {project.get('Timeline_Months', 'Unknown')} months
                     """,
                     icon=folium.Icon(color=icon_color, icon=icon_shape, prefix='fa')

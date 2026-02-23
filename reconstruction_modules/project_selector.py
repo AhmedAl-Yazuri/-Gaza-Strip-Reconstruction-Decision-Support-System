@@ -1,4 +1,4 @@
-﻿# ======================================================
+# ======================================================
 # reconstruction_modules/project_selector.py
 # Tiered Project Selection System
 # ======================================================
@@ -508,7 +508,6 @@ def create_zone_projects(zone_row, zone_idx, selected_projects, infrastructure_l
                     'Rebuilding_Strategy': zone_row.get('rebuilding_strategy', {}).get('strategy', 'Balanced_Reconstruction') if isinstance(zone_row.get('rebuilding_strategy'), dict) else 'Balanced_Reconstruction',
                     'Required_Units': estimate_required_units(zone_row, project_type),
                     'Adjusted_Priority_Score': calculate_adjusted_score(zone_row, project_type),
-                    'Estimated_Cost': estimate_project_cost(zone_row, project_type),
                     'Timeline_Months': estimate_project_timeline(project_type),
                     'Infrastructure_Type': project_info['name'],
                     'Status': 'Planned',
@@ -564,26 +563,6 @@ def estimate_required_units(zone_row, project_type):
             infra_bonus += zone_row[count_col] * 20  # Bonus units for existing infrastructure
 
     return required_units + infra_bonus
-
-def estimate_project_cost(zone_row, project_type):
-    """Estimate cost for specific project type"""
-    base_cost_per_unit = COST_ESTIMATES.get('per_unit', 50000)
-    damage_level = zone_row.get('damage_count', 0)
-
-    # Adjust cost based on project type
-    cost_multipliers = {
-        'healthcare': 1.5,  # Healthcare is more expensive
-        'education': 1.2,   # Education facilities cost more
-        'universities': 1.8, # Universities are very expensive (larger, specialized facilities)
-        'transportation': 0.8,  # Streets relatively cheaper
-        'municipal': 1.3,   # Municipal buildings expensive
-        'utilities': 1.4    # Utilities infrastructure costly
-    }
-
-    multiplier = cost_multipliers.get(project_type, 1.0)
-    estimated_cost = max(damage_level * base_cost_per_unit * multiplier, 100000)  # Minimum $100k
-
-    return f"${estimated_cost:,.0f}"
 
 def estimate_project_timeline(project_type):
     """Estimate timeline for specific project type"""
@@ -656,7 +635,6 @@ def create_zone_projects(zone_row, zone_idx, selected_projects, infrastructure_l
             'Facility_Names': '; '.join(facility_names) if facility_names else 'Multiple facilities',
             'Rebuilding_Strategy': zone_row.get('rebuilding_strategy', {}).get('strategy', 'Balanced_Reconstruction'),
             'Required_Units': estimate_required_units(zone_row, project_type),
-            'Estimated_Cost': estimate_project_cost(zone_row, project_type),
             'Timeline_Months': estimate_project_timeline(project_type),
             'Status': 'Planned',
             'Funding_Source': 'TBD',

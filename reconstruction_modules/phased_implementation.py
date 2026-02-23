@@ -1,10 +1,18 @@
-﻿# ======================================================
+# ======================================================
 # phased_implementation.py - Multi-Phase Project Implementation
 # ======================================================
 
 import pandas as pd
+import re
 from datetime import datetime
 from config import COST_ESTIMATES
+
+
+def _is_arabic_column_name(name):
+    """Return True if a column name contains Arabic characters."""
+    if name is None:
+        return False
+    return re.search(r"[\u0600-\u06FF]", str(name)) is not None
 
 
 def assign_project_phases(projects_df, num_phases=4):
@@ -98,23 +106,10 @@ def export_phased_excel(projects_df, output_path=None):
     remaining_cols = [col for col in export_df.columns if col not in existing_preferred]
     export_df = export_df[existing_preferred + remaining_cols]
 
-    if 'Estimated_Cost' not in export_df.columns:
-        if 'Required_Units' in export_df.columns:
-            unit_cost = COST_ESTIMATES.get('per_unit', 50000)
-            required_units = pd.to_numeric(export_df['Required_Units'], errors='coerce').fillna(0)
-            export_df['Estimated_Cost'] = required_units * unit_cost
-        else:
-            export_df['Estimated_Cost'] = 0
-
     with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
         export_df.to_excel(writer, sheet_name='All Projects', index=False)
 
         agg_map = {'Project_ID': 'count'}
-        if 'Estimated_Cost' in export_df.columns:
-            agg_map['Estimated_Cost'] = lambda x: pd.to_numeric(
-                x.astype(str).str.replace(r'[$,]', '', regex=True),
-                errors='coerce'
-            ).sum()
         if 'Timeline_Months' in export_df.columns:
             agg_map['Timeline_Months'] = 'mean'
         if 'Phase_Start_Month' in export_df.columns:
@@ -140,7 +135,14 @@ def _drop_redundant_export_columns(df):
         return df
 
     out = df.copy()
+
+    drop_if_exists = ['Estimated_Cost']
+    out = out.drop(columns=[c for c in drop_if_exists if c in out.columns], errors='ignore')
     out = out.loc[:, ~out.columns.duplicated(keep='first')]
+
+    arabic_cols = [col for col in out.columns if _is_arabic_column_name(col)]
+    if arabic_cols:
+        out = out.drop(columns=arabic_cols)
 
     def _normalized(series):
         return series.astype('string').fillna('<NA>').str.strip()

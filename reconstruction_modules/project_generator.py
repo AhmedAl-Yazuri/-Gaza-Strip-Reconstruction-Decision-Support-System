@@ -6,6 +6,7 @@
 from config import *
 import geopandas as gpd
 import pandas as pd
+import re
 from datetime import datetime
 from pyproj import Transformer
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -27,6 +28,13 @@ def _to_wgs84_lat_lon(point, source_crs):
         return round(lat, 6), round(lon, 6)
     except Exception:
         return None, None
+
+
+def _is_arabic_column_name(name):
+    """Return True if a column name contains Arabic characters."""
+    if name is None:
+        return False
+    return re.search(r"[\u0600-\u06FF]", str(name)) is not None
 
 
 def enrich_projects_with_reference_points(projects_df, infrastructure_layers, max_distance_m=3000):
@@ -104,7 +112,6 @@ def enrich_projects_with_reference_points(projects_df, infrastructure_layers, ma
     for idx, nearest_row in nearest.iterrows():
         candidate_name = nearest_row.get("ref_name")
         candidate_type = nearest_row.get("ref_type_en")
-        candidate_type_ar = nearest_row.get("ref_type_ar")
 
         if candidate_name is None or pd.isna(candidate_name):
             continue
@@ -114,7 +121,6 @@ def enrich_projects_with_reference_points(projects_df, infrastructure_layers, ma
             export_df.at[idx, "Reference_Point_Name"] = str(candidate_name)
         if "Reference_Point_Type" not in export_df.columns or str(export_df.at[idx, "Reference_Point_Type"]) in default_names:
             export_df.at[idx, "Reference_Point_Type"] = str(candidate_type or "Reference Point")
-        export_df.at[idx, "Reference_Point_Type_AR"] = str(candidate_type_ar or "نقطة مرجعية")
 
         val = nearest_row.get("distance_to_reference_m")
         export_df.at[idx, "Distance_To_Reference_m"] = round(float(val), 1) if pd.notna(val) else None
@@ -412,30 +418,8 @@ def export_projects_to_excel(projects_df, output_path=None):
                     area_name = area_name.where(~valid, values)
             export_df["Area_Name"] = area_name
 
-        if "Reference_Point_Type_AR" not in export_df.columns:
-            type_map_ar = {
-                "Major Hospital": "مستشفى رئيسي",
-                "Hospital/Clinic": "مستشفى/عيادة",
-                "Street/Road Segment": "شارع/طريق",
-                "Street": "شارع",
-                "School": "مدرسة",
-                "University": "جامعة",
-                "Water Utility": "مرفق مياه",
-                "Energy/Fuel Utility": "مرفق طاقة/وقود",
-                "Municipal Facility": "مرفق بلدي",
-                "General Zone": "منطقة عامة",
-            }
-            export_df["Reference_Point_Type_AR"] = export_df.get("Reference_Point_Type", pd.Series("", index=export_df.index)).map(type_map_ar).fillna("نقطة مرجعية")
-        if "اسم_النقطة" not in export_df.columns:
-            export_df["اسم_النقطة"] = export_df.get("Reference_Point_Name", "")
-        if "نوع_النقطة" not in export_df.columns:
-            export_df["نوع_النقطة"] = export_df.get("Reference_Point_Type_AR", "نقطة مرجعية")
-        if "خط_العرض" not in export_df.columns and "Latitude" in export_df.columns:
-            export_df["خط_العرض"] = export_df["Latitude"]
-        if "خط_الطول" not in export_df.columns and "Longitude" in export_df.columns:
-            export_df["خط_الطول"] = export_df["Longitude"]
-        if "رابط_جوجل_مابس" not in export_df.columns and {"Latitude", "Longitude"}.issubset(export_df.columns):
-            export_df["رابط_جوجل_مابس"] = export_df.apply(
+        if "Google_Maps_Link" not in export_df.columns and {"Latitude", "Longitude"}.issubset(export_df.columns):
+            export_df["Google_Maps_Link"] = export_df.apply(
                 lambda row: f"https://www.google.com/maps?q={row['Latitude']},{row['Longitude']}"
                 if pd.notna(row["Latitude"]) and pd.notna(row["Longitude"]) else "",
                 axis=1
@@ -448,14 +432,9 @@ def export_projects_to_excel(projects_df, output_path=None):
             "Project_Name",
             "Reference_Point_Type",
             "Reference_Point_Name",
-            "Reference_Point_Type_AR",
-            "نوع_النقطة",
-            "اسم_النقطة",
             "Latitude",
             "Longitude",
-            "خط_العرض",
-            "خط_الطول",
-            "رابط_جوجل_مابس",
+            "Google_Maps_Link",
             "Area_Name",
             "Municipality",
             "Zone_ID",
@@ -606,7 +585,7 @@ def _style_workbook(writer):
             ws.column_dimensions[get_column_letter(col_idx)].width = adjusted
 
         headers = {cell.value: cell.column for cell in ws[1]}
-        for coord_col in ["Latitude", "Longitude", "خط_العرض", "خط_الطول"]:
+        for coord_col in ["Latitude", "Longitude"]:
             if coord_col in headers:
                 col_letter = get_column_letter(headers[coord_col])
                 for row in range(2, ws.max_row + 1):
@@ -620,25 +599,20 @@ def _drop_redundant_export_columns(df):
 
     out = df.copy()
 
+    # Explicitly remove internal/legacy columns not needed in final templates.
+    drop_if_exists = ["Reference_Point_Type_AR", "Estimated_Cost"]
+    out = out.drop(columns=[c for c in drop_if_exists if c in out.columns], errors="ignore")
+
     # 1) Remove exact duplicate column names (keep first occurrence).
     out = out.loc[:, ~out.columns.duplicated(keep="first")]
 
+    # 2) Remove Arabic-named columns (English-only headers in exports).
+    arabic_cols = [col for col in out.columns if _is_arabic_column_name(col)]
+    if arabic_cols:
+        out = out.drop(columns=arabic_cols)
+
     def _normalized(series):
         return series.astype("string").fillna("<NA>").str.strip()
-
-    # 2) Resolve known bilingual duplicates by keeping Arabic presentation columns.
-    preferred_pairs = [
-        ("Latitude", "خط_العرض", "خط_العرض"),
-        ("Longitude", "خط_الطول", "خط_الطول"),
-        ("Reference_Point_Name", "اسم_النقطة", "اسم_النقطة"),
-        ("Reference_Point_Type_AR", "نوع_النقطة", "نوع_النقطة"),
-    ]
-    for col_a, col_b, keep_col in preferred_pairs:
-        if col_a in out.columns and col_b in out.columns:
-            if _normalized(out[col_a]).equals(_normalized(out[col_b])):
-                drop_col = col_b if keep_col == col_a else col_a
-                if drop_col in out.columns:
-                    out = out.drop(columns=[drop_col])
 
     # 3) Remove any remaining columns with identical full content (keep first).
     kept = []

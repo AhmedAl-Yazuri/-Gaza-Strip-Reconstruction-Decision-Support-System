@@ -79,18 +79,18 @@ def create_interactive_dashboard(hex_gdf, projects_df, damage_analysis, infrastr
         row=1, col=2
     )
 
-    if projects_df is not None and not projects_df.empty and 'Estimated_Cost' in projects_df.columns:
-        project_costs = projects_df.groupby('Infrastructure_Type').agg({
-            'Estimated_Cost': lambda x: pd.to_numeric(x.astype(str).str.replace(r'[$,]', '', regex=True), errors='coerce').sum()
-        }).reset_index().sort_values('Estimated_Cost', ascending=True)
+    if projects_df is not None and not projects_df.empty and 'Required_Units' in projects_df.columns:
+        project_units = projects_df.groupby('Infrastructure_Type').agg({
+            'Required_Units': lambda x: pd.to_numeric(x, errors='coerce').fillna(0).sum()
+        }).reset_index().sort_values('Required_Units', ascending=True)
 
         fig.add_trace(
             go.Bar(
-                y=project_costs['Infrastructure_Type'],
-                x=project_costs['Estimated_Cost'],
+                y=project_units['Infrastructure_Type'],
+                x=project_units['Required_Units'],
                 orientation='h',
-                marker=dict(color=project_costs['Estimated_Cost'], colorscale='Viridis', showscale=True),
-                text=[f'${x:,.0f}' for x in project_costs['Estimated_Cost']],
+                marker=dict(color=project_units['Required_Units'], colorscale='Viridis', showscale=True),
+                text=[f'{int(x):,}' for x in project_units['Required_Units']],
                 textposition='outside'
             ),
             row=2, col=1
@@ -258,8 +258,7 @@ def create_reconstruction_timeline(projects_df, hex_gdf, output_path=None):
             textposition='inside',
             hovertemplate=f"<b>{infra_type}</b><br>" +
                          f"المحافظة: {project.get('Municipality', 'Unknown')}<br>" +
-                         f"المدة: {project['Timeline_Months']} شهر<br>" +
-                         f"التكلفة: {project.get('Estimated_Cost', 'N/A')}<extra></extra>",
+                         f"المدة: {project['Timeline_Months']} شهر<extra></extra>",
             showlegend=idx < 6
         ))
     
