@@ -1,0 +1,51 @@
+================================================================================
+GAZA RECONSTRUCTION DECISION SUPPORT SYSTEM - SUMMARY REPORT
+================================================================================
+
+Report Generated: 2026-03-28 21:16:21
+System Version: 1.0.0
+
+ANALYSIS SUMMARY
+--------------------
+Total Zones Analyzed: 2159
+Total Damage Sites: 198308
+High Damage Areas (>= P90, threshold 291.2): 216
+Moderate Damage Areas (P70-P90, threshold 98.0 to <291.2): 435
+Low Damage Areas (< P70, threshold <98.0): 1508
+
+STRATEGY BREAKDOWN
+--------------------
+Street_Reconstruction_Priority: 1203 zones
+Basic_Infrastructure_First: 636 zones
+Balanced_Reconstruction: 320 zones
+
+PROJECT SUMMARY
+--------------------
+Total Projects Generated: 175
+Total Required Units: 366,240
+Average Timeline: 15.0 months
+
+TOP 10 PRIORITY ZONES
+--------------------
+Rank 1: Zone ZONE-187 (AI Score: 0.980, Damage: 184.0, Strategy: Basic_Infrastructure_First, Municipality: Rafah City)
+Rank 2: Zone ZONE-524 (AI Score: 0.980, Damage: 177.0, Strategy: Basic_Infrastructure_First, Municipality: Al Fukhkhari)
+Rank 3: Zone ZONE-254 (AI Score: 0.980, Damage: 43.0, Strategy: Street_Reconstruction_Priority, Municipality: Rafah City)
+Rank 4: Zone ZONE-253 (AI Score: 0.980, Damage: 113.0, Strategy: Basic_Infrastructure_First, Municipality: Rafah City)
+Rank 5: Zone ZONE-252 (AI Score: 0.980, Damage: 38.0, Strategy: Street_Reconstruction_Priority, Municipality: Rafah City)
+Rank 6: Zone ZONE-251 (AI Score: 0.980, Damage: 64.0, Strategy: Balanced_Reconstruction, Municipality: Rafah City)
+Rank 7: Zone ZONE-250 (AI Score: 0.980, Damage: 170.0, Strategy: Basic_Infrastructure_First, Municipality: Rafah City)
+Rank 8: Zone ZONE-249 (AI Score: 0.980, Damage: 76.0, Strategy: Balanced_Reconstruction, Municipality: Rafah City)
+Rank 9: Zone ZONE-248 (AI Score: 0.980, Damage: 105.0, Strategy: Basic_Infrastructure_First, Municipality: Rafah City)
+Rank 10: Zone ZONE-443 (AI Score: 0.980, Damage: 22.0, Strategy: Street_Reconstruction_Priority, Municipality: An Naser)
+
+RECOMMENDATIONS
+--------------------
+1. Focus initial reconstruction efforts on high-damage areas with basic infrastructure priorities
+2. Implement balanced reconstruction approaches in moderate-damage municipalities
+3. Prioritize street rebuilding in low-damage areas to restore connectivity
+4. Consider age-based ranking for persistent damage sites requiring long-term attention
+5. Monitor and adjust strategies based on field assessments and changing conditions
+
+================================================================================
+END OF REPORT
+================================================================================

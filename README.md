@@ -65,6 +65,24 @@ The main pipeline is executed from:
 python reconstruction_modules/main.py
 ```
 
+The local web interface can be started from:
+
+```bash
+python web_ui.py
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8080
+```
+
+The browser UI is a React-based frontend served from:
+
+```text
+frontend/
+```
+
 Execution flow:
 1. **Load Data**: Reads UNOSAT damage data and infrastructure layers.
 2. **Damage Analysis**: Builds damage pattern indicators.
